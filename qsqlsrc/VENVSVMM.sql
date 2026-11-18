@@ -7,7 +7,8 @@
 --   RPCLIB.MCSVFX     native copy of QS36F/MC.SVFX (fax, ext, certified, RP function, active).
 --                     Refreshed by MCSVFXCL after every MCS700 update; verified in sync 11/18/26.
 --   RPCLIB."MC.SVEM"  used ONLY for Ship Via chars 16-25 (EMSHVI). Its email field is obsolete.
---   RPCLIB.ORCARRLB   carrier name for LTL Via
+--   RPCLIB."O.CARIER" carrier name for LTL Via (PF under ORCARRLB; unique key SHVIA,
+--                     no select/omit. A view can't be built over ORCARRLB: SQL7010)
 -- Multiple emails are NOT here: read RPCLIB.MCSVEMLAA (over MC.SVEMA) in the service.
 --
 -- Dev: created in PRJ260220. Change the schema to RPCLIB at promotion.
@@ -59,7 +60,7 @@ SELECT
   FROM RPCLIB."MC.SVMM" M
   LEFT JOIN RPCLIB.MCSVFX    F ON F.FXNUMB = M.VMNUMB
   LEFT JOIN RPCLIB."MC.SVEM" E ON E.EMNUMB = M.VMNUMB
-  LEFT JOIN RPCLIB.ORCARRLB  C ON C.SHVIA  = M.VMLTLV
+  LEFT JOIN RPCLIB."O.CARIER" C ON C.SHVIA  = M.VMLTLV
                               AND M.VMLTLV NOT IN ('', '000');
 
 LABEL ON TABLE PRJ260220.VENVSVMM IS 'Vendor Inquiry - MCS700 layout (read only)';
