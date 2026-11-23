@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="Cache-control" content="no-cache">
+	<link rel="icon" type="image/x-icon" href="/images/aprilaire-with-blue-background-monogram.png"/>
+	<link rel="stylesheet" href="/css/aprilaire_style.css"/>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.1.3/css/bootstrap.min.css"/>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
+	<script src="./scripts/config.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+	<title>Vendor Inquiry</title>
+</head>
+<!--
+	vendorInquiry.html  -  Vendor Inquiry (read only)
+	Project : Vendor Inquiry (260220-00) -- SOX read-only vendor access
+	Source  : vendorportal/html/vendorInquiry.html
+	Deploy  : /www/restsrv01/htdocs/vendorInquiry.html
+	Calls   : web/services/vendorInquiry  (VENINQ)
+
+	READ ONLY BY DESIGN. The only input on this page is the vendor number.
+	Maintenance stays on the green screen (MCS700) for the Sourcing group.
+
+	Field layout and labels follow the MCS700 screen, not the DDS text.
+	JSON keys come from VENINQ's vendor_t; renaming one there breaks this
+	page silently.
+-->
+<style>
+
+/* --- Loader spinner (same as P&IC) --- */
+#loader {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 1;
+  width: 120px;
+  height: 120px;
+  margin: -75px 0 0 -75px;
+  border: 16px solid #bcbcbc;
+  border-radius: 50%;
+  border-top: 16px solid #003DA5;
+  animation: spin 2s linear infinite;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* --- Search panel (same as P&IC) --- */
+.search-panel {
+	background: #f4f6f9;
+	border: 1px solid #d5dbe3;
+	border-radius: 4px;
+	padding: 12px 16px;
+	margin-bottom: 12px;
+}
+.search-panel label {
+	font-size: 13px;
+	font-weight: bold;
+	color: #333;
+	margin-right: 4px;
+}
+.search-panel input[type=text] {
+	padding: 4px 8px;
+	border: 1px solid #ccc;
+	border-radius: 3px;
+	margin-right: 14px;
+	font-size: 14px;
+}
+.search-btn {
+	background-color: #003DA5;
+	color: white;
+	border: none;
+	padding: 6px 18px;
+	border-radius: 3px;
+	cursor: pointer;
+}
+.search-btn:hover { opacity: 0.8; }
+
+/* --- Vendor card --- */
+.vendor-card {
+	border: 1px solid #d5dbe3;
+	border-radius: 4px;
+	max-width: 1100px;
+	margin: 0 auto;
+	background: #fff;
+}
+.vendor-head {
+	background-color: #003DA5;
+	color: white;
+	padding: 10px 16px;
+	border-radius: 4px 4px 0 0;
+	font-size: 20px;
+}
+.vendor-head .nbr { opacity: 0.8; margin-right: 10px; }
+.badge-inactive {
+	background: #dc3545;
+	color: white;
+	font-size: 13px;
+	font-weight: bold;
+	padding: 3px 10px;
+	border-radius: 10px;
+	margin-left: 12px;
+	vertical-align: middle;
+}
+.vendor-body {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 4px 40px;
+	padding: 12px 16px;
+}
+.detail-sect {
+	font-weight: bold;
+	color: #003DA5;
+	border-bottom: 1px solid #003DA5;
+	margin-bottom: 4px;
+	padding-top: 6px;
+}
+.detail-item { font-size: 14px; padding: 2px 0; }
+.detail-item .lbl { display: inline-block; width: 170px; color: #555; }
+.detail-item .val { font-weight: bold; }
+.detail-item .val.empty { color: #aaa; font-weight: normal; }
+
+.email-list { list-style: none; padding: 0; margin: 0; }
+.email-list li { font-size: 14px; font-weight: bold; padding: 2px 0; }
+
+@media (max-width: 800px) {
+	.vendor-body { grid-template-columns: 1fr; }
+}
+
+</style>
+<body>
+
+	<div class="container-md" style="max-width:100%">
+		<div class="row page-header">
+			<div class="col-sm-3">
+				<a><img width="140" alt="aprilaire-white-logo.svg" src="https://rp.widen.net/content/cxonb8wz76/svg/aprilaire-white-logo.svg?u=z3ljms&amp;use=hcime"></a>
+			</div>
+			<div class="col-sm-6 text-center">
+				<span class="h2" id="headerText">Vendor Inquiry</span>
+			</div>
+		</div>
+
+		<div style="display: inline-block;">
+			<div style="float:left;margin-right: 6px">
+				<button id="goHome" style="background-color: #003DA5;color:white" class="btn"><i class="fa fa-home"></i> Home</button>
+			</div>
+		</div>
+
+		<br><br>
+
+		<div class="search-panel">
+			<label for="vendorNbr">Vendor number</label>
+			<input type="text" id="vendorNbr" size="8" maxlength="5" inputmode="numeric"
+			       placeholder="e.g. 52757" autocomplete="off">
+			<button class="search-btn" id="searchBtn"><i class="fa fa-search"></i> Look up</button>
+		</div>
+
+		<div style="display:none;" id="loader"></div>
+		<div align="center" style="color:red" id="errorMessage"></div>
+		<br>
+		<div id="vendorContainer"></div>
+	</div>
+
+</body>
+<script>
+
+	var gServerName = gConfig.serverName;
+	var gServerLink = gConfig.serverLink;
+
+	document.getElementById("headerText").innerHTML = 'Vendor Inquiry - ' + escapeHTML(gServerName);
+	document.title = 'Vendor Inquiry - ' + gServerName;
+
+	document.getElementById("searchBtn").addEventListener('click', makeRequest);
+
+	document.getElementById("goHome").addEventListener('click', function() {
+		window.open(gServerLink, "_self");
+	});
+
+	document.getElementById("vendorNbr").addEventListener("keypress", function(event) {
+		if (event.key === "Enter") {
+			event.preventDefault();
+			makeRequest();
+		}
+	});
+
+	// Optional deep link: vendorInquiry.html?vendorNbr=52757 looks it up on
+	// load. Lets a future name-lookup page (VENSRCH) link straight here.
+	(function() {
+		var v = new URLSearchParams(window.location.search).get('vendorNbr');
+		if (v) {
+			document.getElementById("vendorNbr").value = v;
+			makeRequest();
+		}
+	})();
+
+	// ---------------------------------------------------------------
+	// Layout -- two columns in MCS700 screen order.
+	// Labels are the green-screen labels, NOT the DDS column text.
+	//   fmt: optional function(vendor) -> display string
+	// ---------------------------------------------------------------
+	var leftCols = [
+		{ sect: 'Address' },
+		{ key: 'name',       label: 'Name' },
+		{ key: 'address1',   label: 'Address 1' },
+		{ key: 'address2',   label: 'Address 2' },
+		{ key: 'city',       label: 'City' },
+		{ key: 'state',      label: 'State' },
+		{ key: 'zipCode',    label: 'Zip Code' },
+		{ key: 'attention',  label: 'Attention' },
+		{ sect: 'Contact' },
+		{ key: 'phoneNbr',   label: 'Phone Nbr',
+		  fmt: function(v) { return v.extNo ? v.phoneNbr + '  ext ' + v.extNo : v.phoneNbr; } },
+		{ key: 'faxNbr',     label: 'Fax Nbr' },
+		{ sect: 'Terms & Shipping' },
+		{ key: 'terms',      label: 'Terms' },
+		{ key: 'shipVia',    label: 'Ship Via' },
+		{ key: 'ltlVia',     label: 'LTL Via',
+		  fmt: function(v) {
+			  if (!v.ltlVia) return '';
+			  return v.ltlCarrierName ? v.ltlVia + ' – ' + v.ltlCarrierName : v.ltlVia;
+		  } },
+		{ key: 'fobPoint',   label: 'FOB Point' },
+		{ key: 'certified',  label: 'Certified' }
+	];
+
+	var rightCols = [
+		{ sect: 'Vendor' },
+		{ key: 'sortField',        label: 'Sort Field' },
+		{ key: 'active',           label: 'Active' },
+		{ key: 'rpFunction',       label: 'RP Function' },
+		{ key: 'stdTermsDoc',      label: 'Std Terms Document' },
+		{ sect: 'Payment Codes' },
+		{ key: 'prepayAllow',      label: 'Prepay & Allow' },
+		{ key: 'prepayBill',       label: 'Prepay & Bill' },
+		{ key: 'collect',          label: 'Collect' },
+		{ key: 'automaticPayment', label: 'Automatic Payment' }
+	];
+
+	// ---------------------------------------------------------------
+	// Fetch -- one XHR per request, so a fast second lookup can't be
+	// answered by the first request's handler.
+	// ---------------------------------------------------------------
+	function makeRequest() {
+		var vendorNbr = document.getElementById("vendorNbr").value.trim();
+		var requestURL = gServerLink + "web/services/vendorInquiry?vendorNbr="
+		               + encodeURIComponent(vendorNbr);
+
+		document.getElementById("errorMessage").innerHTML = '';
+		document.getElementById("vendorContainer").innerHTML = '';
+
+		if (vendorNbr === '') {
+			document.getElementById("errorMessage").innerHTML = 'Enter a vendor number.';
+			return;
+		}
+
+		document.getElementById("loader").style.display = "block";
+
+		var xhr = new XMLHttpRequest();
+		xhr.onreadystatechange = function() { handleResponse(xhr); };
+		xhr.open('GET', requestURL, true);
+		xhr.send();
+	}
+
+	// ---------------------------------------------------------------
+	// Handle response
+	// ---------------------------------------------------------------
+	function handleResponse(xhr) {
+		if (xhr.readyState !== XMLHttpRequest.DONE) return;
+
+		document.getElementById("loader").style.display = "none";
+
+		if (xhr.status === 401 || xhr.status === 403) {
+			document.getElementById("errorMessage").innerHTML =
+				'You are not authorized to view this page.';
+			return;
+		}
+
+		if (xhr.status !== 200) {
+			document.getElementById("errorMessage").innerHTML =
+				'Error contacting web service (HTTP ' + xhr.status + ')';
+			return;
+		}
+
+		var raw, rtn;
+		try {
+			raw = JSON.parse(xhr.responseText);
+		} catch (e) {
+			document.getElementById("errorMessage").innerHTML =
+				'Unexpected response from web service.';
+			return;
+		}
+		rtn = raw.VENINQResult || raw;
+
+		// 400 bad number, 401 not in WEBSVCACC, 404 not on file, 500 SQL error
+		if (rtn.status.code !== 200) {
+			document.getElementById("errorMessage").innerHTML =
+				escapeHTML(rtn.status.message.text);
+			return;
+		}
+
+		// IWS trims to emails_LENGTH when "Detect length fields" is on, but
+		// drop blank entries anyway in case the service is redeployed without it.
+		var emails = (rtn.emails || []).filter(function(e) {
+			return e && e.address && e.address.trim() !== '';
+		});
+
+		buildCard(rtn.vendor, emails);
+	}
+
+	// ---------------------------------------------------------------
+	// Build the vendor card
+	// ---------------------------------------------------------------
+	function buildCard(v, emails) {
+		var html = '<div class="vendor-card">';
+
+		html += '<div class="vendor-head">'
+		      + '<span class="nbr">' + escapeHTML(v.vendorNbr) + '</span>'
+		      + escapeHTML(v.name);
+		if (v.inactive === 'Y') {
+			html += '<span class="badge-inactive">Inactive</span>';
+		}
+		html += '</div>';
+
+		html += '<div class="vendor-body">';
+		html += '<div>' + buildColumn(leftCols, v) + '</div>';
+		html += '<div>' + buildColumn(rightCols, v)
+		      + '<div class="detail-sect">Email Addresses</div>'
+		      + buildEmails(emails)
+		      + '</div>';
+		html += '</div>';
+
+		html += '</div>';
+		document.getElementById("vendorContainer").innerHTML = html;
+	}
+
+	function buildColumn(cols, v) {
+		var html = '';
+		for (var i = 0; i < cols.length; i++) {
+			var c = cols[i];
+			if (c.sect) {
+				html += '<div class="detail-sect">' + escapeHTML(c.sect) + '</div>';
+				continue;
+			}
+			var val = c.fmt ? c.fmt(v) : v[c.key];
+			html += '<div class="detail-item">'
+			      + '<span class="lbl">' + escapeHTML(c.label) + '</span>'
+			      + displayVal(val)
+			      + '</div>';
+		}
+		return html;
+	}
+
+	function buildEmails(emails) {
+		if (emails.length === 0) {
+			return '<div class="detail-item"><span class="val empty">No email addresses on file</span></div>';
+		}
+		// Plain text on purpose: some addresses are deliberately disabled
+		// (e.g. ".donotsend"), and mailto: would open a broken draft.
+		var html = '<ul class="email-list">';
+		for (var i = 0; i < emails.length; i++) {
+			html += '<li>' + escapeHTML(emails[i].address) + '</li>';
+		}
+		return html + '</ul>';
+	}
+
+	// Blank -> em dash, so "no data" doesn't look like "didn't load".
+	function displayVal(val) {
+		if (val === null || val === undefined || String(val).trim() === '') {
+			return '<span class="val empty">&mdash;</span>';
+		}
+		return '<span class="val">' + escapeHTML(val) + '</span>';
+	}
+
+	// ===============================================================
+	// HELPERS
+	// ===============================================================
+	function escapeHTML(s) {
+		if (s === null || s === undefined) return '';
+		return String(s)
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#39;');
+	}
+
+</script>
+</html>

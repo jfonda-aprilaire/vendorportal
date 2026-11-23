@@ -20,7 +20,7 @@ Positions are from the MCS700 I-specs, cross-checked with DSPFFD 11/18/26.
 | Terms              | VMTERV    | VMTERM    | 160-174 | TERMS              | Free form. VMTERC (244-245) is unused |
 | Ship Via           | VMSHPV    | VMSHPV    | 175-189 | SHIP_VIA           | First 15 of 25. See Ship Via |
 | FOB Point          | VMFOBP    | VMFOB     | 190-204 | FOB_POINT          | |
-| LTL Via            | VMLTLV    | VMLTLV    | 211-213 | LTL_VIA, LTL_CARRIER_NAME | Join ORCARRLB.SHVIA. '000'/blank = none |
+| LTL Via            | VMLTLV    | VMLTLV    | 211-213 | LTL_VIA, LTL_CARRIER_NAME | Join RPCLIB."O.CARIER".SHVIA (PF under ORCARRLB). '000'/blank = none |
 | Std Terms Document | FLR03A    | VSTDCD    | 241-243 | STD_TERMS_DOC      | DDS says "Filler 003" but it holds live data. Text only (no PDF link this sprint) |
 | Sort Field         | VMALPH    | VMSORT    | 248-252 | SORT_FIELD         | Also in SRCH_TEXT |
 | Prepay & Allow     | VMPPAS    | VMPPA     | 253     | PREPAY_ALLOW       | |
@@ -74,6 +74,12 @@ MC.SVEMAX (26 rows) is a leftover. Copies in CAVLIB/RPCTEST/TASLIB are not live.
 | Terms / RP Function | Raw | Dan |
 | Std Terms PDF link | Not this sprint | Jeffery |
 | Name lookup | Stretch goal, if time allows | Dan |
+
+## Carrier file
+
+RPCLIB."O.CARIER" (format CA1MAST) is the PF under ORCARRLB. CREATE VIEW over ORCARRLB fails with
+SQL7010, so the view joins the PF. ORCARRLB has no select/omit and a unique key on SHVIA, so the PF join
+can't duplicate vendors (verified: view count = MC.SVMM count, 3466).
 
 ## Open items
 

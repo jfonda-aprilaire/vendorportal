@@ -64,3 +64,36 @@ SELECT
                               AND M.VMLTLV NOT IN ('', '000');
 
 LABEL ON TABLE PRJ260220.VENVSVMM IS 'Vendor Inquiry - MCS700 layout (read only)';
+
+-- Column headings. Without these the view inherits the stale DDS headings
+-- (STD_TERMS_DOC shows as "Filler"). Green-screen labels, per field_map.md.
+LABEL ON COLUMN PRJ260220.VENVSVMM (
+    VENDOR_NBR        IS 'Vendor Nbr',
+    STATUS_CODE       IS 'Status Code',
+    INACTIVE          IS 'Inactive (deleted)',
+    NAME              IS 'Name',
+    ADDRESS_1         IS 'Address 1',
+    ADDRESS_2         IS 'Address 2',
+    CITY              IS 'City',
+    STATE             IS 'State',
+    ZIP_CODE          IS 'Zip Code',
+    ATTENTION         IS 'Attention',
+    PHONE_NBR         IS 'Phone Nbr',
+    EXT_NO            IS 'Ext No',
+    FAX_NBR           IS 'Fax Nbr',
+    TERMS             IS 'Terms',
+    SHIP_VIA          IS 'Ship Via',
+    LTL_VIA           IS 'LTL Via',
+    LTL_CARRIER_NAME  IS 'LTL Carrier Name',
+    FOB_POINT         IS 'FOB Point',
+    CERTIFIED         IS 'Certified',
+    SORT_FIELD        IS 'Sort Field',
+    PREPAY_ALLOW      IS 'Prepay & Allow',
+    PREPAY_BILL       IS 'Prepay & Bill',
+    COLLECT           IS 'Collect',
+    AUTOMATIC_PAYMENT IS 'Automatic Payment',
+    STD_TERMS_DOC     IS 'Std Terms Document',
+    RP_FUNCTION       IS 'RP Function',
+    ACTIVE            IS 'Active',
+    SRCH_TEXT         IS 'Search Text'
+);
